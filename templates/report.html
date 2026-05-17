@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Inventory Report{% endblock %}
+{% block page_title %}Inventory Report{% endblock %}
+
+{% block content %}
+
+{# ── Summary banner ───────────────────────────────────── #}
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="label">Total SKUs</div>
+    <div class="value">{{ products | length }}</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Total Units in Stock</div>
+    <div class="value">{{ total_items }}</div>
+  </div>
+  <div class="stat-card success">
+    <div class="label">Total Stock Value</div>
+    <div class="value" style="font-size:1.5rem">${{ "%.2f"|format(total_value) }}</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="label">Low Stock Items</div>
+    <div class="value">{{ low_stock_count }}</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="label">Out of Stock</div>
+    <div class="value">{{ out_of_stock }}</div>
+  </div>
+</div>
+
+{# ── Category breakdown ───────────────────────────────── #}
+{% if categories %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h2>📂 Stock by Category</h2>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>SKUs</th>
+          <th>Total Units</th>
+          <th>Total Value</th>
+          <th>% of Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat, data in categories.items() | sort(attribute='1.value', reverse=True) %}
+        <tr>
+          <td><strong>{{ cat }}</strong></td>
+          <td>{{ data.count }}</td>
+          <td>{{ data.qty }}</td>
+          <td>${{ "%.2f"|format(data.value) }}</td>
+          <td>
+            {% if total_value > 0 %}
+              {% set pct = (data.value / total_value * 100) | round(1) %}
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden">
+                  <div style="width:{{ pct }}%;background:var(--primary);height:100%"></div>
+                </div>
+                <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">{{ pct }}%</span>
+              </div>
+            {% else %}0%{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{# ── Full product list ────────────────────────────────── #}
+<div class="card">
+  <div class="card-header">
+    <h2>📋 Current Stock Levels</h2>
+    <span class="text-muted" style="font-size:.8rem">
+      Generated {{ now if now else '' }} — all prices in USD
+    </span>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Qty on Hand</th>
+          <th>Unit Price</th>
+          <th>Total Value</th>
+          <th>Min Level</th>
+          <th>Supplier</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.category }}</td>
+          <td>
+            <strong class="{% if p.quantity == 0 %}text-danger{% elif p.is_low_stock %}text-danger{% else %}text-success{% endif %}">
+              {{ p.quantity }}
+            </strong>
+          </td>
+          <td>${{ "%.2f"|format(p.unit_price) }}</td>
+          <td>${{ "%.2f"|format(p.quantity * p.unit_price) }}</td>
+          <td>{{ p.min_stock_level }}</td>
+          <td class="text-muted">{{ p.supplier.name if p.supplier else '—' }}</td>
+          <td>
+            {% if p.quantity == 0 %}
+              <span class="badge badge-danger">Out of Stock</span>
+            {% elif p.is_low_stock %}
+              <span class="badge badge-warning">Low Stock</span>
+            {% else %}
+              <span class="badge badge-success">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

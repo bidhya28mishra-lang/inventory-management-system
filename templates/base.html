@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Inventory System{% endblock %} – SBIMS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+{# ── Sidebar ────────────────────────────────────────────── #}
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h1>📦 SBIMS</h1>
+    <small>Small Business Inventory</small>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a href="{{ url_for('dashboard') }}"
+       class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <span class="icon">🏠</span> Dashboard
+    </a>
+
+    <div class="nav-section">Inventory</div>
+    <a href="{{ url_for('products') }}"
+       class="nav-link {% if 'product' in request.endpoint %}active{% endif %}">
+      <span class="icon">📋</span> Products
+    </a>
+    <a href="{{ url_for('stock_in') }}"
+       class="nav-link {% if request.endpoint == 'stock_in' %}active{% endif %}">
+      <span class="icon">⬇️</span> Stock In
+    </a>
+    <a href="{{ url_for('stock_out') }}"
+       class="nav-link {% if request.endpoint == 'stock_out' %}active{% endif %}">
+      <span class="icon">⬆️</span> Stock Out
+    </a>
+    <a href="{{ url_for('stock_history') }}"
+       class="nav-link {% if request.endpoint == 'stock_history' %}active{% endif %}">
+      <span class="icon">📜</span> Stock History
+    </a>
+
+    <div class="nav-section">Management</div>
+    <a href="{{ url_for('suppliers') }}"
+       class="nav-link {% if 'supplier' in request.endpoint %}active{% endif %}">
+      <span class="icon">🏭</span> Suppliers
+    </a>
+    <a href="{{ url_for('report') }}"
+       class="nav-link {% if request.endpoint == 'report' %}active{% endif %}">
+      <span class="icon">📊</span> Report
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    {% if current_user.is_authenticated %}
+      Logged in as <strong style="color:#cbd5e1">{{ current_user.username }}</strong>
+      <br>
+      <a href="{{ url_for('logout') }}">Log out</a>
+    {% endif %}
+  </div>
+</nav>
+
+{# ── Main ──────────────────────────────────────────────── #}
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+    <span class="topbar-user">
+      {% if current_user.is_authenticated %}
+        <strong>{{ current_user.username }}</strong>
+        &nbsp;·&nbsp;
+        <span class="badge badge-{% if current_user.role == 'admin' %}danger{% else %}info{% endif %}">
+          {{ current_user.role }}
+        </span>
+      {% endif %}
+    </span>
+  </div>
+
+  <div class="content">
+    {# Flash messages #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alerts">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              {{ message }}
+              <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+</body>
+</html>

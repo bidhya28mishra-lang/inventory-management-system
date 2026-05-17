@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+{# ── Summary stat cards ───────────────────────────────── #}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Total Products</div>
+    <div class="value">{{ total_products }}</div>
+  </div>
+  <div class="stat-card success">
+    <div class="label">Total Suppliers</div>
+    <div class="value">{{ total_suppliers }}</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Stock Movements</div>
+    <div class="value">{{ total_movements }}</div>
+  </div>
+  <div class="stat-card {% if low_stock_items %}danger{% else %}success{% endif %}">
+    <div class="label">Low Stock Alerts</div>
+    <div class="value">{{ low_stock_items | length }}</div>
+  </div>
+</div>
+
+{# ── Low-stock alerts (FR8) ───────────────────────────── #}
+{% if low_stock_items %}
+<div class="card mb-4">
+  <div class="card-header">
+    <h2>⚠️ Low Stock Alerts</h2>
+    <a href="{{ url_for('report') }}" class="btn btn-outline btn-sm">View Full Report</a>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Current Qty</th>
+          <th>Min Level</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in low_stock_items %}
+        <tr>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.category }}</td>
+          <td class="text-danger"><strong>{{ p.quantity }}</strong></td>
+          <td>{{ p.min_stock_level }}</td>
+          <td>
+            {% if p.quantity == 0 %}
+              <span class="badge badge-danger">Out of Stock</span>
+            {% else %}
+              <span class="badge badge-warning">Low Stock</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('stock_in') }}" class="btn btn-success btn-sm">+ Restock</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-success mb-4">
+  ✅ All products are sufficiently stocked. No alerts at this time.
+</div>
+{% endif %}
+
+{# ── Recent stock movements ───────────────────────────── #}
+<div class="card">
+  <div class="card-header">
+    <h2>📜 Recent Stock Movements</h2>
+    <a href="{{ url_for('stock_history') }}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+  {% if recent_movements %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Date / Time</th>
+          <th>Product</th>
+          <th>Type</th>
+          <th>Quantity</th>
+          <th>Reference</th>
+          <th>Recorded By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in recent_movements %}
+        <tr>
+          <td class="text-muted" style="white-space:nowrap">
+            {{ m.created_at.strftime('%d %b %Y %H:%M') }}
+          </td>
+          <td><strong>{{ m.product.name }}</strong></td>
+          <td>
+            {% if m.movement_type == 'in' %}
+              <span class="badge badge-success">Stock In ⬇️</span>
+            {% else %}
+              <span class="badge badge-warning">Stock Out ⬆️</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if m.movement_type == 'in' %}
+              <span class="text-success">+{{ m.quantity }}</span>
+            {% else %}
+              <span class="text-danger">−{{ m.quantity }}</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ m.reference or '—' }}</td>
+          <td class="text-muted">{{ m.recorded_by.username if m.recorded_by else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <p>No stock movements recorded yet.</p>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <a href="{{ url_for('stock_in') }}"  class="btn btn-success btn-sm">Record Stock In</a>
+      <a href="{{ url_for('stock_out') }}" class="btn btn-warning btn-sm">Record Stock Out</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
